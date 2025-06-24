@@ -1,4 +1,4 @@
-[![Build and Test JMeter GUI](https://github.com/Jplazadelosreyes/j-meter-tester/actions/workflows/test.yml/badge.svg)](https://github.com/Jplazadelosreyes/j-meter-tester/actions/workflows/test.yml)
+[![Build and Test JMeter GUI](https://github.com/Jplazadelosreyes/j-meter-tester/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/Jplazadelosreyes/j-meter-tester/actions/workflows/test.yml)
 # JMeter GUI con VNC en Docker
 
 Este repositorio proporciona un entorno Dockerizado completo para ejecutar Apache JMeter con una interfaz gráfica de usuario (GUI) a la que se puede acceder vía VNC. Además, incluye scripts para automatizar la generación de informes HTML a partir de los resultados de tus pruebas.
