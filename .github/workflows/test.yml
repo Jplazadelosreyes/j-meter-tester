@@ -1,51 +1,36 @@
-# Nombre del flujo de trabajo
-name: CI Test for JMeter Docker Setup
+name: Build and Test JMeter GUI
 
-# Disparadores del flujo
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
-# Trabajos que se ejecutarán
 jobs:
-  build-and-test:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout the repository
         uses: actions/checkout@v4
 
-      - name: Create required directories for Docker volumes
-        run: mkdir -p jmeter-tests jmeter-results
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - name: Create a dummy JTL result file for testing
-        run: |
-          echo "timeStamp,elapsed,label,responseCode,responseMessage,threadName,dataType,success,failureMessage,bytes,sentBytes,grpThreads,allThreads,URL,Latency,IdleTime,Connect" > ./jmeter-results/Reporte.jtl
-          echo "1672531200000,123,Test Request,200,OK,Thread Group 1-1,text,true,,456,123,1,1,http://example.com,120,0,50" >> ./jmeter-results/Reporte.jtl
+      - name: Show working directory contents
+        run: ls -alh
 
-      - name: Build the Docker image with Docker Compose
+      - name: Build Docker image
         run: docker compose build
 
-      - name: Run containers in the background
+      - name: Run Docker container
         run: docker compose up -d
 
-      - name: Wait for the container to be ready
-        run: |
-          echo "Waiting 30 seconds for container to initialize..."
-          sleep 30
-          echo "Container should be ready. Listing running containers:"
-          docker ps -a
+      - name: Wait a bit for JMeter GUI to be ready (opcional)
+        run: sleep 15
 
-      - name: Execute report generation script inside the container
-        run: docker exec jmeter_gui bash /home/jmeter/jmeter-tests/generar_informe.sh
+      - name: List running containers (debug)
+        run: docker ps
 
-      - name: Verify that the HTML report was generated
-        run: test -f ./jmeter-results/reporte_html/index.html && echo "✅ Report generated successfully!"
-
-      - name: Clean up containers
-        if: always()
-        run: |
-          echo "Cleaning up Docker containers..."
-          docker compose down
+      - name: Stop Docker container
+        run: docker compose down

@@ -38,4 +38,4 @@ services:
     # que el script de inicio de VNC se ejecute.
     # CMD en Dockerfile ya lo maneja si no hay un "command" aquí.
     # command: /usr/local/bin/start_jmeter_vnc.sh
-    # al iniciar el password para ingresat a JMETER es jmeterpassword
+    # al iniciar el password para ingresar a JMETER es jmeterpassword
