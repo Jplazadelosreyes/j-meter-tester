@@ -1,0 +1,41 @@
+# Versión de la sintaxis de Docker Compose. Se recomienda la más reciente para nuevas configuraciones.
+version: '3.8'
+
+# Define los servicios que componen tu aplicación.
+services:
+  # Nombre del servicio para tu contenedor JMeter con interfaz gráfica.
+  jmeter-gui:
+    # Especifica que la imagen se construirá a partir del Dockerfile en el directorio actual.
+    # El tag '-t tu_imagen_jmeter' del 'docker build' ya no es tan crítico aquí,
+    # ya que Docker Compose construirá la imagen y le asignará un nombre por defecto
+    # basado en el nombre del servicio y el directorio del proyecto (ej. jmeter-tester-jmeter-gui).
+    build: .
+
+    # Nombre asignado al contenedor para facilitar su identificación.
+    container_name: jmeter_gui
+
+    # Mapeo de puertos entre el host y el contenedor.
+    # El puerto 5901 del host se mapea al puerto 5901 del contenedor (VNC).
+    ports:
+      - "5901:5901"
+
+    # Mapeo de volúmenes para persistencia y acceso a archivos.
+    # Esto es crucial para que el contenedor pueda leer tus planes de prueba y guardar/leer tus resultados.
+    volumes:
+      # Monta la carpeta local 'jmeter-results' al directorio de resultados dentro del contenedor.
+      # Asegura que los resultados generados o cargados en JMeter GUI sean accesibles en el host.
+      - ./jmeter-results:/home/jmeter/jmeter-results
+
+      # Monta la carpeta local 'jmeter-tests' (donde tienes tus .jmx) al directorio de trabajo del usuario jmeter.
+      # Esto facilita que JMeter GUI pueda abrir los planes de prueba.
+      - ./jmeter-tests:/home/jmeter/jmeter-tests
+
+    # Restarta el contenedor si se detiene, a menos que se detenga manualmente.
+    restart: "no" # Puedes cambiar a "always" si quieres que siempre esté corriendo
+
+    # Comando por defecto al iniciar el servicio.
+    # Esto sobrescribe el CMD del Dockerfile si fuera necesario, pero aquí solo asegura
+    # que el script de inicio de VNC se ejecute.
+    # CMD en Dockerfile ya lo maneja si no hay un "command" aquí.
+    # command: /usr/local/bin/start_jmeter_vnc.sh
+    # al iniciar el password para ingresat a JMETER es jmeterpassword

@@ -1,0 +1,80 @@
+# Nombre del flujo de trabajo de GitHub Actions. Aparecerá en la pestaña "Actions" de tu repositorio.
+name: CI Test for JMeter Docker Setup
+
+# Define los disparadores (triggers) que inician este flujo de trabajo.
+on:
+  # Se ejecuta cuando se hace un push a la rama 'main'.
+  push:
+    branches: [ main ]
+  # Se ejecuta cuando se crea o actualiza un pull request dirigido a la rama 'main'.
+  pull_request:
+    branches: [ main ]
+
+# Define los trabajos (jobs) que se ejecutarán. En este caso, solo tenemos uno.
+jobs:
+  # Nombre del trabajo. Puedes elegir el que prefieras.
+  build-and-test:
+    # Especifica el tipo de máquina virtual (runner) en la que se ejecutará el trabajo.
+    # 'ubuntu-latest' es una buena opción ya que viene con Docker preinstalado.
+    runs-on: ubuntu-latest
+
+    # Define la secuencia de pasos que componen el trabajo.
+    steps:
+      # Paso 1: Clonar el repositorio.
+      # Utiliza la acción predefinida 'actions/checkout' para descargar el código de tu repositorio en el runner.
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Paso 2: Crear los directorios necesarios para los volúmenes de Docker.
+      # Estos directorios deben existir en el host (el runner de GitHub) antes de que 'docker-compose' intente montarlos.
+      - name: Create required directories for Docker volumes
+        run: mkdir -p jmeter-tests jmeter-results
+
+      # Paso 3: Crear un archivo de resultados JTL de prueba.
+      # Este paso simula la existencia de un archivo de resultados 'Reporte.jtl' que JMeter generaría.
+      # Es crucial para probar el script 'generar_informe.sh'.
+      # Se crea un archivo CSV con el encabezado y una línea de datos de ejemplo.
+      - name: Create a dummy JTL result file for testing
+        run: |
+          echo "timeStamp,elapsed,label,responseCode,responseMessage,threadName,dataType,success,failureMessage,bytes,sentBytes,grpThreads,allThreads,URL,Latency,IdleTime,Connect" > ./jmeter-results/Reporte.jtl
+          echo "1672531200000,123,Test Request,200,OK,Thread Group 1-1,text,true,,456,123,1,1,http://example.com,120,0,50" >> ./jmeter-results/Reporte.jtl
+
+      # Paso 4: Construir la imagen Docker usando docker-compose.
+      # Este comando lee el 'Dockerfile' y 'docker-compose.yml' para construir la imagen.
+      # El log de la construcción será visible en la salida de GitHub Actions.
+      - name: Build the Docker image with docker-compose
+        run: docker-compose build
+
+      # Paso 5: Levantar los contenedores en segundo plano (detached mode).
+      # Esto inicia el servicio 'jmeter-gui' tal como lo harías localmente.
+      - name: Run containers in the background
+        run: docker-compose up -d
+
+      # Paso 6: Esperar a que el contenedor se estabilice.
+      # Aunque no nos conectaremos vía VNC, es buena práctica dar un margen para que todos los servicios internos se inicien.
+      - name: Wait for the container to be ready
+        run: |
+          echo "Waiting 30 seconds for container to initialize..."
+          sleep 30
+          echo "Container should be ready. Listing running containers:"
+          docker ps -a
+
+      # Paso 7: Ejecutar el script de generación de informes dentro del contenedor.
+      # Este es el paso clave de la prueba. Llama al script que debe procesar el 'Reporte.jtl' de prueba.
+      - name: Execute report generation script inside the container
+        run: docker exec jmeter_gui bash /home/jmeter/jmeter-tests/generar_informe.sh
+
+      # Paso 8: Verificar que el informe HTML se haya generado correctamente.
+      # Comprueba la existencia del archivo 'index.html' en la carpeta montada en el host.
+      # Si el archivo no existe, el comando 'test' fallará, lo que hará que el paso y todo el flujo de trabajo fallen.
+      - name: Verify that the HTML report was generated
+        run: test -f ./jmeter-results/reporte_html/index.html && echo "✅ Report generated successfully!"
+
+      # Paso 9: Limpiar (se ejecuta siempre).
+      # 'if: always()' asegura que este paso se ejecute incluso si los pasos anteriores fallaron.
+      # Esto es crucial para detener y eliminar los contenedores y evitar que queden recursos en ejecución en el runner.
+      - name: Clean up containers
+        if: always()
+        run: |
+          echo "Cleaning up Docker containers..."
+          docker-compose down

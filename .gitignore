@@ -1,0 +1,41 @@
+# ############################################################################
+# ## Archivo .gitignore para el Proyecto JMeter con Docker                  ##
+# ############################################################################
+
+# Archivos de log de JMeter
+# Estos archivos se generan cada vez que se ejecuta JMeter y no deben ser versionados.
+jmeter.log
+*.log
+
+# Resultados de las pruebas de JMeter
+# Los archivos .jtl contienen los resultados brutos y pueden ser muy grandes.
+# Los informes HTML también son generados y no deben estar en el repositorio.
+*.jtl
+/jmeter-results/
+
+# Archivos y directorios específicos del sistema operativo
+# Ignorar archivos del sistema generados por macOS, Windows y Linux.
+.DS_Store
+Thumbs.db
+._*
+
+# Directorios de configuración de Entornos de Desarrollo Integrado (IDEs)
+# Estos directorios contienen configuraciones personales del editor de código.
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Archivos de configuración local de Docker Compose
+# Si usas un archivo 'docker-compose.override.yml' para configuraciones locales,
+# es una buena práctica ignorarlo.
+docker-compose.override.yml
+
+# Archivos de entorno
+# El archivo .env puede contener secretos o configuraciones locales.
+.env
+
+# Archivos de construcción y dependencias (en caso de que el proyecto crezca)
+/build/
+/dist/
+node_modules/
